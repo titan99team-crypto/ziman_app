@@ -50,6 +50,16 @@ jobs:
       - name: Static preflight
         working-directory: source
         run: python3 tool/preflight.py
+      - name: Use compatible Android Gradle Plugin
+        working-directory: source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          settings = Path('android/settings.gradle.kts')
+          settings.write_text(settings.read_text().replace('version "9.4.0"', 'version "8.10.1"'))
+          wrapper = Path('android/gradle/wrapper/gradle-wrapper.properties')
+          wrapper.write_text(wrapper.read_text().replace('gradle-9.6.1-bin', 'gradle-8.11.1-bin'))
+          PY
       - name: Get packages
         working-directory: source
         run: flutter pub get
