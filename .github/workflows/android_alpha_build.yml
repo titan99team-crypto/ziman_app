@@ -43,6 +43,13 @@ jobs:
           text = auth.read_text()
           text = text.replace('Future<String?> idToken() => _auth?.currentUser?.getIdToken();', "Future<String?> idToken() async => _auth?.currentUser == null ? null : await _auth!.currentUser!.getIdToken();")
           auth.write_text(text)
+          app = Path('android/app/build.gradle.kts')
+          text = app.read_text()
+          text = text.replace('    kotlinOptions { jvmTarget = JavaVersion.VERSION_17.toString() }\n', '')
+          modern = '\nkotlin {\n    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }\n}\n'
+          if 'compilerOptions { jvmTarget.set' not in text:
+              text = text.replace('\nflutter { source', modern + '\nflutter { source')
+          app.write_text(text)
           PY
       - name: Hydrate Gradle wrapper
         working-directory: source
