@@ -34,20 +34,11 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          ocr = Path('lib/services/ocr_service.dart')
-          text = ocr.read_text()
-          marker = '/// Downloads official Tesseract language packs once, then OCR works offline.'
-          state = '''class OcrPackState {
-            final String code;
-            final String label;
-            final String path;
-            final bool installed;
-            const OcrPackState({required this.code, required this.label, required this.path, required this.installed});
-          }
-
-          '''
-          if 'class OcrPackState' not in text:
-              ocr.write_text(text.replace(marker, state + marker))
+          screen = Path('lib/screens/offline_downloads_page.dart')
+          text = screen.read_text()
+          entry = "import '../models/ocr_result.dart';\n"
+          if entry not in text:
+              screen.write_text(text.replace("import '../services/ocr_service.dart';\n", "import '../services/ocr_service.dart';\n" + entry))
           auth = Path('lib/services/auth_service.dart')
           text = auth.read_text()
           text = text.replace('Future<String?> idToken() => _auth?.currentUser?.getIdToken();', "Future<String?> idToken() async => _auth?.currentUser == null ? null : await _auth!.currentUser!.getIdToken();")
