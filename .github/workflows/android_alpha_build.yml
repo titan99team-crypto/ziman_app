@@ -89,3 +89,58 @@ jobs:
           path: source/build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+      - name: Apply learning path and Debug billing guidance
+        working-directory: source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          data = Path('lib/data/course_data.dart')
+          text = data.read_text()
+          if "id: 'foundation'" not in text:
+              foundation = '''  CourseLevel(
+    id: 'foundation', title: 'المستوى 1 — الأساس: الحروف والأصوات',
+    description: 'الأبجدية والنطق والأرقام قبل حفظ الجمل.', lessons: [
+      CourseLesson(id: 'alphabet-sounds', title: 'الحروف والأصوات الأساسية', subtitle: 'تعرّف شكل الحرف وصوته.', situation: 'بناء أساس القراءة والنطق', minutes: 18, free: true, phrases: [
+        CoursePhrase(iraqi: 'صوت چ مثل چاي.', sorani: 'چ', kurmanji: 'Ç'), CoursePhrase(iraqi: 'صوت ش مثل شمس.', sorani: 'ش', kurmanji: 'Ş')]),
+      CourseLesson(id: 'numbers-basics', title: 'الأرقام والوقت', subtitle: 'عدّ وسؤال عن الساعة.', situation: 'الأرقام في الحياة اليومية', minutes: 14, free: true, phrases: [
+        CoursePhrase(iraqi: 'واحد، اثنين، ثلاثة.', sorani: 'یەک، دوو، سێ.', kurmanji: 'Yek, du, sê.'), CoursePhrase(iraqi: 'شكد الساعة؟', sorani: 'کاتژمێر چەندە؟', kurmanji: 'Saet çend e?')])]),
+  CourseLevel(
+    id: 'grammar', title: 'المستوى 2 — بناء الجملة',
+    description: 'ضمائر، سؤال وجواب، نفي، وملكية.', lessons: [
+      CourseLesson(id: 'pronouns-introductions', title: 'الضمائر والتعريف بالنفس', subtitle: 'أنا، أنت، هو/هي، واسمي.', situation: 'تقديم نفسك', minutes: 16, free: false, phrases: [
+        CoursePhrase(iraqi: 'أنا طالب.', sorani: 'من خوێندکارم.', kurmanji: 'Ez xwendekar im.'), CoursePhrase(iraqi: 'إنت منين؟', sorani: 'تۆ خەڵکی کوێیت؟', kurmanji: 'Tu ji ku derê yî?')]),
+      CourseLesson(id: 'sentence-patterns', title: 'تركيب جملة مفيدة', subtitle: 'فاعل وفعل ومكان أو وقت.', situation: 'وصف ما تفعله الآن', minutes: 18, free: false, phrases: [
+        CoursePhrase(iraqi: 'أنا رايح للبيت.', sorani: 'من دەچم بۆ ماڵ.', kurmanji: 'Ez diçim malê.'), CoursePhrase(iraqi: 'ما أفهم.', sorani: 'تێناگەم.', kurmanji: 'Ez fêm nakim.')])]),
+  CourseLevel(
+    id: 'core-vocabulary', title: 'المستوى 3 — مفردات الحياة',
+    description: 'العائلة والبيت والطعام والأفعال اليومية.', lessons: [
+      CourseLesson(id: 'family-home', title: 'العائلة والبيت', subtitle: 'أفراد العائلة والغرف.', situation: 'الحديث عن عائلتك', minutes: 15, free: false, phrases: [
+        CoursePhrase(iraqi: 'هذا أخوي.', sorani: 'ئەمە برای منە.', kurmanji: 'Ev birayê min e.'), CoursePhrase(iraqi: 'وين الغرفة؟', sorani: 'ژوورەکە لە کوێیە؟', kurmanji: 'Ode li ku ye?')]),
+      CourseLesson(id: 'food-actions', title: 'الطعام والأفعال اليومية', subtitle: 'آكل، أشرب، أريد، أرجع.', situation: 'الحديث عن يومك', minutes: 17, free: false, phrases: [
+        CoursePhrase(iraqi: 'أريد مي.', sorani: 'ئاوەم دەوێت.', kurmanji: 'Ez av dixwazim.'), CoursePhrase(iraqi: 'هسه آكل.', sorani: 'ئێستا دەخۆم.', kurmanji: 'Ez niha dixwim.')])]),
+'''
+              text = text.replace('const courseLevels = <CourseLevel>[', 'const courseLevels = <CourseLevel>[' + foundation)
+              text = text.replace('المستوى 1 — البداية اليومية', 'المستوى 4 — البداية اليومية').replace('المستوى 2 — المواقف الحقيقية', 'المستوى 5 — المواقف الحقيقية').replace('المستوى 3 — المحادثة الطبيعية', 'المستوى 6 — المحادثة الطبيعية')
+              data.write_text(text)
+          billing = Path('lib/services/purchase_service.dart')
+          text = billing.read_text().replace("String get displayPrice => courseProduct?.price ?? r'$10';", "String? get displayPrice => courseProduct?.price;")
+          text = text.replace("message = 'متجر Google Play غير متاح على هذا الجهاز.';", "message = 'هذه نسخة Debug مثبّتة خارج Google Play؛ السعر والدفع يعملان من اختبار Google Play الداخلي فقط.';")
+          billing.write_text(text)
+          page = Path('lib/screens/learn_page.dart')
+          text = page.read_text().replace("Text('مواقف حقيقية بدل الجمل الفصحى التقليدية.'", "Text('من الحروف والأصوات إلى الجمل والمحادثة العملية.'")
+          text = text.replace("if (!_purchase.purchased) Text(_purchase.displayPrice,", "if (!_purchase.purchased && _purchase.displayPrice != null) Text(_purchase.displayPrice!,")
+          text = text.replace("Text('فتح الكورس — ${_purchase.displayPrice}'", "Text(_purchase.displayPrice == null ? 'الدفع غير متاح في نسخة Debug' : 'فتح الكورس — ${_purchase.displayPrice}'")
+          page.write_text(text)
+          voice = Path('lib/services/voice_service.dart')
+          voice.write_text(voice.read_text().replace('لا يوجد صوت مناسب لهذه اللغة على الجهاز. يمكننا لاحقاً استخدام مزود صوت سحابي مخصص.', 'لا يوجد صوت كردي مناسب على هذا الجهاز. ثبّت صوت Kurdish/Sorani من إعدادات تحويل النص إلى كلام إن كان متاحاً؛ وإلا يلزم مزود صوت سحابي أو تسجيلات بشرية.'))
+          PY
+      - name: Build updated debug APK
+        working-directory: source
+        run: flutter build apk --debug --android-skip-build-dependency-validation --dart-define=ZIMAN_API_BASE_URL=https://api.example.invalid
+      - name: Upload updated debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ziman-alpha4-updated-debug-apk
+          path: source/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
