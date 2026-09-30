@@ -50,6 +50,9 @@ jobs:
           if 'compilerOptions { jvmTarget.set' not in text:
               text = text.replace('\nflutter { source', modern + '\nflutter { source')
           app.write_text(text)
+          manifest = Path('android/app/src/debug/AndroidManifest.xml')
+          if manifest.exists():
+              manifest.write_text(manifest.read_text().replace(' android:usesCleartextTraffic="true"', ''))
           PY
       - name: Hydrate Gradle wrapper
         working-directory: source
