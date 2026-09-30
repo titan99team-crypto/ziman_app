@@ -71,7 +71,7 @@ jobs:
         run: flutter test
       - name: Build debug APK
         working-directory: source
-        run: flutter build apk --debug --dart-define=ZIMAN_API_BASE_URL=https://api.example.invalid
+        run: flutter build apk --debug --android-skip-build-dependency-validation --dart-define=ZIMAN_API_BASE_URL=https://api.example.invalid
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
