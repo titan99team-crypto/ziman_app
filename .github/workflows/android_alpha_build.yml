@@ -1,0 +1,56 @@
+name: Android Alpha Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  android-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Flutter 3.47.0
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+          channel: stable
+          cache: true
+      - name: Extract Alpha.4 source
+        run: |
+          mkdir -p source
+          unzip -q "ziman_flutter_v1.0_alpha4_ci_build (1).zip" -d source
+          mkdir -p source/.github/workflows
+          cp .github/workflows/android_alpha_build.yml source/.github/workflows/android_alpha_build.yml
+      - name: Hydrate Gradle wrapper
+        working-directory: source
+        run: python3 tool/bootstrap_android_wrapper.py
+      - name: Static preflight
+        working-directory: source
+        run: python3 tool/preflight.py
+      - name: Get packages
+        working-directory: source
+        run: flutter pub get
+      - name: Analyze
+        working-directory: source
+        run: flutter analyze
+      - name: Unit tests
+        working-directory: source
+        run: flutter test
+      - name: Build debug APK
+        working-directory: source
+        run: flutter build apk --debug --dart-define=ZIMAN_API_BASE_URL=https://api.example.invalid
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ziman-alpha4-debug-apk
+          path: source/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
